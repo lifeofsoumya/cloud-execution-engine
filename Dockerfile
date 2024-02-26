@@ -1,7 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-RUN curl -fsSL https://rpm.nodesource.com/setup_16.x | bash -
-RUN yum install -y nodejs
+# RUN curl -fsSL https://rpm.nodesource.com/setup_16.x | bash -
+# RUN yum install -y nodejs
+RUN yum install java-1.8.0-openjdk-devel -y
 
 RUN yum update -y && yum install -y gcc-c++
 

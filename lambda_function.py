@@ -14,19 +14,41 @@ def execute_python_code(code):
         return str(e)
     finally:
         sys.stdout = original_stdout
-      
-def execute_javascript_code(code):
+
+def execute_java_code(code, timeout=5):
     try:
-        command = ['node', '-e', code]
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
-        output = result.stdout.strip()
-        return output
-    except subprocess.CalledProcessError as e:
-        return str(e)
+        with open('/tmp/temp.java', 'w') as java_file:
+            java_file.write(code)
+        compile_res = subprocess.run(
+            ['javac', '/tmp/temp.java'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout
+        )
+        if compile_res.returncode != 0:
+            return compile_res.stderr.decode()
+        run_res = subprocess.run(
+            ['java', '-classpath', '/tmp', 'temp'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout
+        )
+
+        return run_res.stdout.decode()
+
     except subprocess.TimeoutExpired:
         return "Execution timed out."
     except Exception as e:
-        return str(e)
+        return "An error occurred: " + str(e)
+
+# def execute_javascript_code(code):
+#     try:
+#         command = ['node', '-e', code]
+#         result = subprocess.run(command, capture_output=True, text=True, check=True)
+#         output = result.stdout.strip()
+#         return output
+#     except subprocess.CalledProcessError as e:
+#         return str(e)
+#     except subprocess.TimeoutExpired:
+#         return "Execution timed out."
+#     except Exception as e:
+#         return str(e)
 
 def execute_cpp_code(code):
     try:
@@ -55,10 +77,10 @@ def handler(event, context):
     language = event.get('language', 'python')
     if language == 'python':
         result = execute_python_code(code)
-    elif language == 'javascript':
-        result = execute_javascript_code(code)
     elif language == 'cpp':
         result = execute_cpp_code(code)
+    elif language == 'java':
+        result = execute_java_code(code)
     else:
         result = 'Unsupported language ' + language
     return {
